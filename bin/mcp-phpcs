@@ -1,0 +1,46 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+// Minimal STDIO MCP server exposing PHPCS tools (no external dependencies)
+
+// Ensure errors never pollute STDOUT used for JSON-RPC messages
+ini_set('display_errors', '0');
+
+require_once dirname(__DIR__) . '/autoload.php';
+
+use Mcp\PhpcsServer\Application\Server;
+use Mcp\PhpcsServer\Application\ToolRegistry;
+use Mcp\PhpcsServer\Infrastructure\Config;
+use Mcp\PhpcsServer\Infrastructure\ProcessRunner;
+use Mcp\PhpcsServer\Infrastructure\RulesetLocator;
+use Mcp\PhpcsServer\Infrastructure\Tools\PhpcsCheckTool;
+use Mcp\PhpcsServer\Infrastructure\Tools\PhpcbfFixTool;
+
+$stderr = fopen('php://stderr', 'w');
+
+try {
+    $config = Config::fromEnvironment(__DIR__ . '/../config', new RulesetLocator());
+    $runner = new ProcessRunner($stderr);
+
+    $registry = new ToolRegistry([
+        new PhpcsCheckTool($config, $runner),
+        new PhpcbfFixTool($config, $runner),
+    ]);
+
+    $server = new Server($registry, $stderr);
+    $server->run();
+} catch (Throwable $e) {
+    fwrite($stderr, '[mcp-phpcs fatal] ' . $e->getMessage() . "\n");
+    // Return a single JSON-RPC error if possible (best effort)
+    $error = [
+        'jsonrpc' => '2.0',
+        'id' => null,
+        'error' => [
+            'code' => -32603,
+            'message' => 'Internal error',
+            'data' => ['message' => $e->getMessage()],
+        ],
+    ];
+    echo json_encode($error, JSON_UNESCAPED_SLASHES) . "\n";
+}

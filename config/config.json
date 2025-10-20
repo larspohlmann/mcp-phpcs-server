@@ -1,0 +1,5 @@
+{
+  "phpcsPath": "/Users/larspohlmann/Documents/code/verso/verso-coding-standard/vendor/bin/phpcs",
+  "phpcbfPath": "/Users/larspohlmann/Documents/code/verso/verso-coding-standard/vendor/bin/phpcbf",
+  "rulesetPath": "/Users/larspohlmann/Documents/code/verso/verso-coding-standard/languages/php/phpcs/ruleset.xml"
+}

@@ -127,7 +127,10 @@ final class Server
 
                     break;
                 default:
-                    $this->sendError($id, -32601, 'Method not found');
+                    // If it's a notification (no id), ignore unknown methods
+                    if (null !== $id) {
+                        $this->sendError($id, -32601, 'Method not found');
+                    }
 
                     break;
             }
